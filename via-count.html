@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Via Count</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #F6F3EC;
+    --ink: #22291F;
+    --ink-soft: #5C6455;
+    --line: #D8D2C2;
+    --line-strong: #B8B09A;
+    --moss: #3C5A45;
+    --moss-light: #E4EAE1;
+    --clay: #B5573B;
+    --clay-light: #F3E1D8;
+  }
+
+  html[data-theme="dark"] {
+    --paper: #1B1F19;
+    --ink: #EAE7DD;
+    --ink-soft: #9AA091;
+    --line: #333A30;
+    --line-strong: #4B5342;
+    --moss: #7FAF8B;
+    --moss-light: #26332A;
+    --clay: #E08A6C;
+    --clay-light: #3A281F;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    padding: 4rem 1.5rem 6rem;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+
+  .wrap { max-width: 620px; margin: 0 auto; }
+
+  header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 3rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--line);
+    gap: 1rem;
+  }
+
+  .header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+  }
+
+  #theme-toggle {
+    background: transparent;
+    border: 1px solid var(--line-strong);
+    color: var(--ink-soft);
+    border-radius: 20px;
+    padding: 0.35rem 0.8rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s ease;
+  }
+  #theme-toggle:hover { border-color: var(--moss); color: var(--moss); }
+
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 2.1rem;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+
+  h1 span { color: var(--moss); font-style: italic; font-weight: 500; }
+
+  .tagline {
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    text-align: right;
+    line-height: 1.5;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  #add-form {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 2.5rem;
+  }
+
+  input#item-name {
+    flex: 1;
+    background: transparent;
+    border: none;
+    border-bottom: 1.5px solid var(--line-strong);
+    padding: 0.6rem 0.1rem;
+    font-size: 1rem;
+    font-family: 'Inter', sans-serif;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+  input#item-name::placeholder { color: var(--ink-soft); opacity: 0.7; }
+  input#item-name:focus { border-color: var(--moss); }
+
+  button#add-btn {
+    background: var(--moss);
+    color: var(--paper);
+    border: none;
+    border-radius: 3px;
+    padding: 0 1.3rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.85rem;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  button#add-btn:hover { background: #2E4635; }
+  button#add-btn:active { transform: scale(0.98); }
+
+  .path {
+    position: relative;
+    padding-left: 28px;
+  }
+
+  .path::before {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 10px;
+    bottom: 10px;
+    width: 1px;
+    background: repeating-linear-gradient(to bottom, var(--line-strong) 0, var(--line-strong) 4px, transparent 4px, transparent 9px);
+  }
+
+  .item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0.9rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .item:last-child { border-bottom: none; }
+
+  .waypoint {
+    position: absolute;
+    left: -28px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: var(--paper);
+    border: 1.5px solid var(--line-strong);
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+  .waypoint.active {
+    border-color: var(--moss);
+    background: var(--moss);
+  }
+
+  .item-name {
+    font-size: 1.02rem;
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .step-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid var(--line-strong);
+    background: transparent;
+    color: var(--ink);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    line-height: 1;
+    padding: 0;
+  }
+  .step-btn:hover { border-color: var(--moss); color: var(--moss); }
+  .step-btn:active { transform: scale(0.92); }
+
+  .count {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 1.05rem;
+    font-weight: 500;
+    min-width: 34px;
+    text-align: center;
+  }
+
+  .remove-btn {
+    background: none;
+    border: none;
+    color: var(--ink-soft);
+    font-size: 0.95rem;
+    cursor: pointer;
+    padding: 4px 2px 4px 8px;
+    line-height: 1;
+    opacity: 0.55;
+    transition: opacity 0.15s ease, color 0.15s ease;
+  }
+  .remove-btn:hover { opacity: 1; color: var(--clay); }
+
+  .empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--ink-soft);
+    border: 1px dashed var(--line-strong);
+    border-radius: 6px;
+    font-size: 0.92rem;
+  }
+  .empty strong { display: block; font-family: 'Fraunces', serif; font-size: 1.1rem; font-weight: 500; color: var(--ink); margin-bottom: 0.3rem; }
+
+  footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2.5rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid var(--line);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+  }
+  footer .total-value {
+    color: var(--ink);
+    font-weight: 500;
+    font-size: 1rem;
+  }
+
+  @media (max-width: 480px) {
+    body { padding: 2.5rem 1.2rem 4rem; }
+    header { flex-direction: column; align-items: flex-start; gap: 0.8rem; }
+    .header-right { align-items: flex-start; width: 100%; }
+    .tagline { text-align: left; }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Via <span>Count</span></h1>
+      <div class="header-right">
+        <button id="theme-toggle" type="button" aria-label="Toggle dark theme">
+          <span id="theme-icon">&#9789;</span><span id="theme-label">Dark</span>
+        </button>
+        <div class="tagline">every item,<br>a step along the way</div>
+      </div>
+    </header>
+
+    <div id="add-form">
+      <input id="item-name" type="text" placeholder="Name an item to track…" autocomplete="off" />
+      <button id="add-btn" type="button">Add</button>
+    </div>
+
+    <div id="empty" class="empty">
+      <strong>Nothing on the path yet</strong>
+      Add your first item above to begin counting.
+    </div>
+
+    <div id="path" class="path"></div>
+
+    <footer id="footer" style="display:none;">
+      <span>Items tracked: <span id="item-count">0</span></span>
+      <span>Total <span class="total-value" id="total-value">0</span></span>
+    </footer>
+  </div>
+
+<script>
+  let items = [];
+  let currentTheme = 'light';
+
+  function loadTheme() {
+    applyTheme(currentTheme);
+  }
+
+  function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    const icon = document.getElementById('theme-icon');
+    const label = document.getElementById('theme-label');
+    if (theme === 'dark') {
+      icon.innerHTML = '&#9728;';
+      label.textContent = 'Light';
+    } else {
+      icon.innerHTML = '&#9789;';
+      label.textContent = 'Dark';
+    }
+  }
+
+  document.getElementById('theme-toggle').addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    const next = current === 'dark' ? 'light' : 'dark';
+    currentTheme = next;
+    applyTheme(next);
+  });
+
+  loadTheme();
+
+  function load() {
+    items = defaultItems();
+  }
+
+  function defaultItems() {
+    return [
+      { id: 1, name: 'Apples', count: 3 },
+      { id: 2, name: 'Bananas', count: 5 },
+      { id: 3, name: 'Boxes packed', count: 0 }
+    ];
+  }
+
+  function save() {
+    // Data is kept in memory for the session (no browser storage in artifacts).
+  }
+
+  function escapeHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  function render() {
+    const path = document.getElementById('path');
+    const empty = document.getElementById('empty');
+    const footer = document.getElementById('footer');
+
+    if (items.length === 0) {
+      path.innerHTML = '';
+      empty.style.display = 'block';
+      footer.style.display = 'none';
+      return;
+    }
+
+    empty.style.display = 'none';
+    footer.style.display = 'flex';
+
+    path.innerHTML = items.map(item => `
+      <div class="item">
+        <span class="waypoint ${item.count > 0 ? 'active' : ''}"></span>
+        <span class="item-name">${escapeHtml(item.name)}</span>
+        <div class="controls">
+          <button class="step-btn" data-action="dec" data-id="${item.id}" aria-label="Decrease ${escapeHtml(item.name)}">&minus;</button>
+          <span class="count">${item.count}</span>
+          <button class="step-btn" data-action="inc" data-id="${item.id}" aria-label="Increase ${escapeHtml(item.name)}">+</button>
+          <button class="remove-btn" data-action="remove" data-id="${item.id}" aria-label="Remove ${escapeHtml(item.name)}">&times;</button>
+        </div>
+      </div>
+    `).join('');
+
+    document.getElementById('item-count').textContent = items.length;
+    document.getElementById('total-value').textContent = items.reduce((s, i) => s + i.count, 0);
+  }
+
+  function addItem() {
+    const input = document.getElementById('item-name');
+    const name = input.value.trim();
+    if (!name) return;
+    items.push({ id: Date.now(), name, count: 0 });
+    input.value = '';
+    save();
+    render();
+    input.focus();
+  }
+
+  document.getElementById('add-btn').addEventListener('click', addItem);
+
+  document.getElementById('item-name').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addItem();
+    }
+  });
+
+  document.getElementById('path').addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const id = Number(btn.dataset.id);
+    const action = btn.dataset.action;
+    const item = items.find(i => i.id === id);
+    if (!item) return;
+
+    if (action === 'inc') item.count++;
+    if (action === 'dec') item.count = Math.max(0, item.count - 1);
+    if (action === 'remove') items = items.filter(i => i.id !== id);
+
+    save();
+    render();
+  });
+
+  load();
+  render();
+</script>
+</body>
+</html>
